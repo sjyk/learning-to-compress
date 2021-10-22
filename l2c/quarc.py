@@ -6,6 +6,7 @@ from core import *
 from imcompress import *
 
 
+#Quantized Autoregressive Codes (Quarc)
 class Quarc(CompressionAlgorithm):
 	'''Applies a basic quantization algorithm to compress the data
 	'''
@@ -21,6 +22,8 @@ class Quarc(CompressionAlgorithm):
 
 		self.coderange = int(math.ceil(1.0/error_thresh))
 
+		self.AR_MODELS = target + '/learned_'
+
 
 	"""The main compression loop
 	"""
@@ -35,7 +38,13 @@ class Quarc(CompressionAlgorithm):
 
 
 		lin = LinearAutoregressiveIM()
-		codes, _ = lin.compress(codes)
+		codes, models = lin.compress(codes)
+		for i, model in enumerate(models):
+			fname = self.AR_MODELS + str(i)
+			np.save(fname, model)
+			compressz(fname +'.npy', fname+'.gz')
+			self.DATA_FILES += [fname+'.gz']
+
 
 		struct = iarray_bitpacking(codes, order='F')
 		struct.flushz(self.CODES)
@@ -44,7 +53,8 @@ class Quarc(CompressionAlgorithm):
 		self.compression_stats['compression_latency'] = timer() - start
 		self.compression_stats['compressed_size'] = self.getSize()
 		self.compression_stats['compressed_ratio'] = self.getSize()/self.compression_stats['original_size']
-		self.compression_stats.update(struct.additional_stats)
+		self.compression_stats['code_size'] = self.getSize() - self.getModelSize()
+		self.compression_stats['model_size'] = self.getModelSize()
 	
 
 	def decompress(self, original=None):
@@ -86,7 +96,7 @@ Test code here
 """
 ####
 
-data = np.loadtxt('/Users/sanjaykrishnan/Downloads/test_comp/ColorHistogram.asc')[:1000,1:]
+data = np.loadtxt('/Users/sanjaykrishnan/Downloads/test_comp/ColorHistogram.asc')[:,1:]
 
 #normalize this data
 N,p = data.shape
@@ -95,7 +105,7 @@ N,p = data.shape
 nn = Quarc('quantize')
 nn.load(data)
 nn.compress()
-nn.decompress(data)
+#nn.decompress(data)
 print(nn.compression_stats)
 
 

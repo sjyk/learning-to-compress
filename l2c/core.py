@@ -257,6 +257,22 @@ def iarray_bitpacking(codes, order='C'):
 	return BitPackedStruct(bit_length, order, dims, code_array, {'bitpacktime': timer() - start})
 
 
+def sarray_conversion(codes):
+	'''Implements a sparse encoding for an nd-integer array
+	   		codes: an nd integer array
+	'''
+	N,p = codes.shape
+	buffer = []
+
+	for i in range(N):
+		for j in range(p):
+			if codes[i,j] != 0.0:
+				buffer.append(np.array([i,j, codes[i,j]]))
+
+	return np.array(buffer)
+
+
+
 def compressz(filein, fileout):
 	#applies gzip to a file
 
