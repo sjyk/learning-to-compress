@@ -97,7 +97,7 @@ class Quarc(CompressionAlgorithm):
 
 
 		for i in range(p):
-			codes[:,i] = (codes[:,i]/coderange + normalization[1,i])*(normalization[0,i] - normalization[1,i])
+			codes[:,i] = (codes[:,i]/coderange)*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
 
 
 		self.compression_stats['decompression_latency'] = timer() - start
@@ -120,10 +120,12 @@ Test code here
 """
 ####
 
-data = np.loadtxt('/Users/sanjaykrishnan/Downloads/test_comp/ColorHistogram.asc')[:,1:]
+data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:30000,1:]
 
 #normalize this data
 N,p = data.shape
+
+print(np.max(data,axis=0), N,p)
 
 
 nn = Quarc('quantize')

@@ -219,11 +219,14 @@ class CompressionAlgorithm:
 
 		N,p = data.shape
 
+		per_col_errors = np.zeros((p,1))
 		for i in range(p):
-			data[:,i] = (data[:,i] - self.normalization[1,i])*(self.normalization[0,i] - self.normalization[1,i])
-			codec[:,i] = (codec[:,i] - self.normalization[1,i])*(self.normalization[0,i] - self.normalization[1,i])
-			
-		per_col_errors = np.max(np.abs(data - codec), axis=0)
+			data[:,i] = data[:,i]#(data[:,i] - self.normalization[1,i])/(self.normalization[0,i] - self.normalization[1,i])
+			codec[:,i]= codec[:,i]# ( - self.normalization[1,i])/(self.normalization[0,i] - self.normalization[1,i])
+			per_col_errors = np.abs(data[:,i] - codec[:,i])/(self.normalization[0,i] - self.normalization[1,i])
+
+		#per_col_errors = np.max(np.abs(data - codec), axis=0)
+		#print(per_col_errors, np.max(data, axis=0), np.max(codec, axis=0))
 		return {'Linfty': np.max(per_col_errors), 'L1':np.mean(np.abs(data - codec))}
 		
 

@@ -66,11 +66,11 @@ class LinearAutoregressiveIM():
 			Y = src[:,prediction]
 
 			value,counts = np.unique(src[:,prediction], return_counts=True)
-			median_count = np.median(counts)
+			median_count = np.mean(counts)
 			lookup = {v:(c < median_count)*1.0 for v,c in zip(value,counts)}
 
 
-			reg = LogisticRegression(class_weight=lookup)
+			reg = LogisticRegression(class_weight=lookup, verbose=0)
 			reg.fit(X,Y)
 			Ypred = reg.predict(X)
 

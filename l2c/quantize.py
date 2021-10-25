@@ -59,7 +59,7 @@ class Quantize(CompressionAlgorithm):
 		bit_length = struct.bit_length
 
 		for i in range(p):
-			codes[:,i] = (codes[:,i]/coderange + normalization[1,i])*(normalization[0,i] - normalization[1,i])
+			codes[:,i] = (codes[:,i]/coderange)*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
 
 
 		self.compression_stats['decompression_latency'] = timer() - start
@@ -125,7 +125,7 @@ class QuantizeGZ(CompressionAlgorithm):
 		bit_length = struct.bit_length
 
 		for i in range(p):
-			codes[:,i] = (codes[:,i]/coderange + normalization[1,i])*(normalization[0,i] - normalization[1,i])
+			codes[:,i] = (codes[:,i]/coderange)*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
 
 
 		self.compression_stats['decompression_latency'] = timer() - start
