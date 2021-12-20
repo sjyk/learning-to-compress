@@ -2,8 +2,11 @@
    quarc.
 '''
 from core import *
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import classification_report
+from sklearn.neural_network import MLPRegressor
+from sklearn.preprocessing import PolynomialFeatures
 import numpy as np
 
 
@@ -12,91 +15,120 @@ class LinearAutoregressiveIM():
 	def __init__(self):
 		pass
 
+	def avg_run_size(self, vector):
+
+		N = vector.shape[0]
+
+		runs = []
+		start = 0
+		for i in range(N-1):
+			if vector[i] != vector[i+1]:
+				runs.append(i+1 - start)
+				start = i + 1
+
+		return np.mean(runs)
+
 
 	def compress(self, src):
 		data = src.copy()
 		N,p = data.shape
 		coderange = np.max(src)
+
 		models = []
+		classes = []
+
+		lag = 1
 		
-		for j in range(1, p):
-			slice = list(range(0,j))
-			prediction = j
+		for j in range(0, p):
 
+			training_X = []
+			training_Y = []
 
-			X = src[:,slice]
-			Y = src[:,prediction]
+			for i in range(lag, N):
+				training_X.append(src[i-lag:i,:].flatten())
+				training_Y.append(src[i,j])
 
-			value,counts = np.unique(src[:,prediction], return_counts=True)
-			median_count = np.median(counts)
-			lookup = {v:(c < median_count)*1.0 for v,c in zip(value,counts)}
+			X = np.array(training_X)
+			Y = np.array(training_Y)
 
+			p = PolynomialFeatures(degree = 2)
+			X  = p.fit_transform(X)
 
-			reg = LogisticRegression(class_weight=lookup)
+			reg = LinearRegression()
 			reg.fit(X,Y)
-			Ypred = reg.predict(X)
 
-			mask = (Ypred.reshape(-1) == Y.reshape(-1))
+			Y_pred = np.round(reg.predict(X))
 
-			data[mask, j] = coderange + 1
+			cnt = 0
+			for i in range(lag, N-1):
+				if int(Y_pred[i-lag]) == int(Y[i-lag]):
+					data[i,j] = coderange + 1
+					cnt += 1
 
-			#if it makes a difference
-			#if entropy(data[:, j]) > entropy(src[:, j]):
-			#	data[mask, j] = src[mask, j]
-			#else:
-			models.append(np.hstack([reg.intercept_.reshape(-1,1),reg.coef_]))
+					#print(int(Y_pred[i-lag]),int(Y[i-lag]))
 
-		return data, models
+			print('Replaced', cnt, N, 'for attr',j, self.avg_run_size(src[:,j]),self.avg_run_size(data[:,j]))
+			#models.append(reg.coef_)
+			break
 
+
+
+		return data, models, classes
+
+
+	def decompress(self, src, models, classes):
+
+		coderange = np.max(src)
+		N,p = src.shape
+
+		#left to right decoding
+		for (j,(m,c)) in enumerate(zip(models, classes)):
+			if not m is None:
+				slice = list(range(0,j))
+				X = src[:,slice]
+
+				reg = LogisticRegression()
+				reg.intercept_ = m[:,0]
+				reg.coef_ = m[:,1:]
+				#print(c, m.shape, c.shape)
+				reg.classes_ = c
+
+				Ypred = reg.predict(X)
+
+				#Ypred = np.array([classes[Ypred[i]] for i in range(N)])#assign actual class values
+
+				mask = (src[:,j] == coderange)
+				src[mask,j] = Ypred[mask]#impute
+
+		return src, np.max(src)
+
+
+
+
+class LinearAutoregressiveIM2():
+
+	def __init__(self):
+		pass
 
 
 	def compress(self, src):
 		data = src.copy()
 		N,p = data.shape
-		coderange = np.max(src)
+		coderange = int(np.max(src))
 		models = []
 		classes = []
 		
-		for j in range(1, p):
-			slice = list(range(0,j))
-			prediction = j
+		data = data.flatten()
 
+		new_data = np.zeros((N*p, coderange))
 
-			X = src[:,slice]
-			Y = src[:,prediction]
+		#for each possible code
+		for i in range(coderange):
+			new_data[data == i, i] = 1
+			
+		#	new_data[:,i] = data[]
 
-			value,counts = np.unique(src[:,prediction], return_counts=True)
-			median_count = np.mean(counts)
-			lookup = {v:(c < median_count)*1.0 for v,c in zip(value,counts)}
-
-
-			reg = LogisticRegression(class_weight=lookup, verbose=0)
-			reg.fit(X,Y)
-			Ypred = reg.predict(X)
-
-			mask = (Ypred.reshape(-1) == Y.reshape(-1))
-
-			data[mask, j] = coderange + 1
-
-			#is it worth it?
-			#cost of saving parameters
-			cost_estimate = j * 32 * len(reg.classes_) #bits
-			savings = (entropy(src[:, j]) - entropy(data[:, j]))*N
-
-			print('Model Cost Estimate (bits)', cost_estimate, 'Projected Savings (bits)', savings)
-
-			#if it makes a difference
-			if savings  <= cost_estimate:
-				data[mask, j] = src[mask, j]
-				models.append(None)
-				classes.append(None)
-			else:
-				models.append(np.hstack([reg.intercept_.reshape(-1,1),reg.coef_]))
-				classes.append(reg.classes_)
-
-			#print(reg.classes_.shape, reg.coef_.shape, reg.intercept_.shape)
-
-		return data, models, classes
+		return new_data, models, classes
 
 
 	def decompress(self, src, models, classes):

@@ -148,7 +148,7 @@ Test code here
 """
 ####
 
-data = np.loadtxt('/Users/sanjaykrishnan/Downloads/test_comp/ColorHistogram.asc')[:,1:]
+data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:,1:]
 
 #normalize this data
 N,p = data.shape

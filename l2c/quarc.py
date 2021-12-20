@@ -18,7 +18,7 @@ class Quarc(CompressionAlgorithm):
 	The compression codec is initialized with a per
 	attribute error threshold.
 	'''
-	def __init__(self, target, error_thresh=0.005):
+	def __init__(self, target, error_thresh=0.0001):
 
 		super().__init__(target, error_thresh)
 
@@ -83,7 +83,7 @@ class Quarc(CompressionAlgorithm):
 
 
 		#pass the parameters back to the decoder
-		lin = LinearAutoregressiveIM()
+		lin = LinearAutoregressiveIM2()
 		models = [None]*p
 		for f in glob.glob(self.AR_MODELS +'*'):
 			fname = f.split('.')[0]
@@ -120,7 +120,7 @@ Test code here
 """
 ####
 
-data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:30000,1:]
+data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:10000,1:]
 
 #normalize this data
 N,p = data.shape
@@ -131,7 +131,7 @@ print(np.max(data,axis=0), N,p)
 nn = Quarc('quantize')
 nn.load(data)
 nn.compress()
-nn.decompress(data)
+#nn.decompress(data)
 print(nn.compression_stats)
 
 
