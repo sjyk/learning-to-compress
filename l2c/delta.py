@@ -160,6 +160,7 @@ Test code here
 """
 ####
 
+"""
 data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:,1:]
 #data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
 
@@ -172,5 +173,5 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
-
+"""
 

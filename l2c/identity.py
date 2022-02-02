@@ -180,6 +180,8 @@ class BitStripGZ(CompressionAlgorithm):
 
 	#zero out as many bits as possible
 	def _strip_code(self, vector):
+		p = vector.shape[0]
+
 		for i in range(p): #go component by component
 			value = vector[i]
 			ba = bytearray(struct.pack("d", value))
@@ -203,6 +205,7 @@ Test code here
 """
 ####
 
+"""
 data = np.loadtxt('/Users/sanjaykrishnan/Downloads/test_comp/ColorHistogram.asc')[:,1:]
 
 #normalize this data
@@ -214,5 +217,6 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
+"""
 
 

@@ -149,6 +149,7 @@ class QuantizeGZ(CompressionAlgorithm):
 """
 Test code here
 """
+"""
 ####
 
 data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:,1:]
@@ -163,5 +164,6 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
+"""
 
 

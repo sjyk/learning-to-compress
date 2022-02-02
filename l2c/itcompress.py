@@ -14,7 +14,7 @@ class ItCompress(CompressionAlgorithm):
 	The compression codec is initialized with a per
 	attribute error threshold.
 	'''
-	def __init__(self, target, error_thresh=0.005):
+	def __init__(self, target, error_thresh=0.0001):
 
 		super().__init__(target, error_thresh)
 
@@ -46,7 +46,7 @@ class ItCompress(CompressionAlgorithm):
 
 			if not found_code:
 				codes[i] = len(code_set)	
-				code_lst.append(self._strip_code(data[i,:]))
+				code_lst.append(self._strip_code(self.data[i,:]))
 				code_set.add(i)
 
 		struct = iarray_bitpacking(codes)
@@ -57,13 +57,18 @@ class ItCompress(CompressionAlgorithm):
 		np.save(self.MODEL, model)
 		compressz(self.MODEL + '.npy', self.MODEL+'.npyz')
 
+		self.DATA_FILES += [self.MODEL+'.npyz']
+
 		self.compression_stats['compression_latency'] = timer() - start
 		self.compression_stats['compressed_size'] = self.getSize()
 		self.compression_stats['compressed_ratio'] = self.getSize()/self.compression_stats['original_size']
-
+		self.compression_stats['code_size'] = self.getSize() - self.getModelSize()
+		self.compression_stats['model_size'] = self.getModelSize()
 
 	#zero out as many bits as possible
 	def _strip_code(self, vector):
+		p = vector.shape[0]
+		
 		for i in range(p): #go component by component
 			value = vector[i]
 			ba = bytearray(struct.pack("d", value))
@@ -99,7 +104,7 @@ class ItCompress(CompressionAlgorithm):
 		bit_length = struct.bit_length
 
 		decoding_array = np.zeros((N,p))
-		for i in range(N):
+		for i in range(N): #modified because of error
 			decoding_array[i, :] = model[int(codes[i]),:] 
 
 
@@ -116,10 +121,15 @@ class ItCompress(CompressionAlgorithm):
 Test code here
 """
 ####
-
-data = np.loadtxt('/Users/sanjaykrishnan/Downloads/test_comp/ColorHistogram.asc')[:1000,1:]
+# '/Users/brunobarbarioli/Documents/Research/learning-to-compress-master/l2c/data/electricity_nips/electricity.npy'
+# '/Users/brunobarbarioli/Documents/Research/learning-to-compress-master/l2c/data/exchange_rate_nips/exchange_rate.npy'
+# '/Users/brunobarbarioli/Documents/Research/learning-to-compress-master/l2c/data/solar_nips/solar.npy'
+# '/Users/brunobarbarioli/Documents/Research/learning-to-compress-master/l2c/data/taxi_30min/taxi.npy'
+# '/Users/brunobarbarioli/Documents/Research/learning-to-compress-master/l2c/data/traffic_nips/traffic.npy'
+#data = np.load('/Users/brunobarbarioli/Documents/Research/learning-to-compress-master/l2c/data/wiki-rolling_nips/wiki.npy')
 
 #normalize this data
+"""
 N,p = data.shape
 
 
@@ -128,5 +138,6 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
+"""
 
 

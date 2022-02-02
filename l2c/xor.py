@@ -87,6 +87,8 @@ class Gorilla(CompressionAlgorithm):
 
 	#zero out as many bits as possible to hit error threshold
 	def _strip_code(self, vector):
+		p = vector.shape[0]
+		
 		for i in range(p): #go component by component
 			value = vector[i]
 			ba = bytearray(struct.pack("d", value))
@@ -122,6 +124,7 @@ Test code here
 """
 ####
 
+"""
 data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:2000,1:]
 #data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
 print(data.shape)
@@ -136,5 +139,6 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
+"""
 
 

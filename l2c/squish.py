@@ -5,12 +5,11 @@ import math
 from core import *
 
 
-class AdaptivePiecewiseConstant(CompressionAlgorithm):
+class EntropyCoding(CompressionAlgorithm):
 	'''Applies a quantization + entropy coding to 
 	   compress a dataset similar to Squish.
-
-	   Assumes time is along columns
 	'''
+
 
 	'''
 	The compression codec is initialized with a per
@@ -20,28 +19,33 @@ class AdaptivePiecewiseConstant(CompressionAlgorithm):
 
 		super().__init__(target, error_thresh)
 
+		self.coderange = int(math.ceil(1.0/error_thresh))
+
+		self.TURBO_CODE_LOCATION = "./Turbo-Range-Coder/turborc" 
+		self.TURBO_CODE_PARAMETER = "-25" #on my laptop run -e0 and find best solution
+
 
 	"""The main compression loop
 	"""
 	def compress(self):
 		start = timer()
 
-		codes = np.zeros((self.N, self.p))*-1#set all to negative one
+		codes = np.ones((self.N, self.p))*-1#set all to negative one
 
-		for j in range(self.p):
-			for i in range(self.N):
+		for i in range(self.N):
+			for j in range(self.p):
+				codes[i,j] = int(self.data[i,j]*self.coderange)
 
-				if i == 0:
-					codes[i,j] = self.data[i,j]
-				else:
-					if np.abs(codes[i-1,j] - self.data[i,j]) < self.error_thresh:
-						codes[i,j] = codes[i-1,j]
-					else:
-						codes[i,j] = self.data[i,j]
-
-		codes = codes.flatten(order='F') #set as a c-integer type
+		codes = codes.astype(np.intc).flatten(order='F') #set as a c-integer type
 		fname = self.CODES
 		np.save(fname, codes)
+
+		command = " ".join([self.TURBO_CODE_LOCATION, self.TURBO_CODE_PARAMETER, fname+".npy", fname+".npy"])
+
+		os.system(command)
+
+		self.DATA_FILES += [fname+".npy.rc"]
+
 
 		self.compression_stats['compression_latency'] = timer() - start
 		self.compression_stats['compressed_size'] = self.getSize()
@@ -55,7 +59,7 @@ class AdaptivePiecewiseConstant(CompressionAlgorithm):
 
 		command = " ".join([self.TURBO_CODE_LOCATION, "-d", self.CODES+".npy.rc", self.CODES+".npy"])
 		os.system(command)
-		codes = np.load(self.CODES+".npy")
+		codes = np.load(self.CODES+".npy", allow_pickle=False)
 
 		normalization = np.load(self.NORMALIZATION + '.npy')
 		_, P2 = normalization.shape
@@ -86,6 +90,7 @@ Test code here
 ####
 
 #data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:2000,1:]
+"""
 data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
 print(data.shape)
 #data = np.nan_to_num(data)
@@ -99,5 +104,6 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
+"""
 
 
