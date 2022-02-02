@@ -297,3 +297,40 @@ def decompressz(filein, fileout):
 def entropy(labels, base=None):
 	value,counts = np.unique(labels, return_counts=True)
 	return scipy.stats.entropy(counts, base=2)
+
+
+
+def delta_xform(data):
+	xform = np.zeros(data.shape)
+	N,p = xform.shape
+
+	for i in range(1,N):
+		for j in range(p):
+			xform[i,j] = data[i,j] - data[i-1,j]
+
+	metadata = np.zeros((1,p+1))
+	metadata[0,0:p] = np.array(data[0,:])
+	metadata[0,p] = np.min(xform)
+
+	#print(xform)
+
+	return xform - np.min(xform), metadata
+
+
+def i_delta_xform(data, metadata):
+	xform = data.copy()
+
+	N,p = xform.shape
+	first_row = metadata[0,0:p]
+	minv = metadata[0,p]
+	xform += minv
+	xform[0,:] = first_row
+
+	for i in range(1,N):
+		for j in range(p):
+			xform[i,j] = xform[i,j] + xform[i-1,j]
+
+	return xform
+
+
+
