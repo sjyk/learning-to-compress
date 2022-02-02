@@ -96,7 +96,10 @@ class QuantizeGZ(CompressionAlgorithm):
 
 		for i in range(self.N):
 			for j in range(self.p):
-				codes[i,j] = int(self.data[i,j]*self.coderange)
+				if not (np.isnan(self.data[i,j])):
+					codes[i,j] = int(self.data[i,j]*self.coderange)
+				else:
+					codes[i,j] = self.coderange//2
 
 
 		struct = iarray_bitpacking(codes)
@@ -148,7 +151,8 @@ Test code here
 """
 ####
 
-data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:,1:]
+data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:2000,1:]
+#data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
 
 #normalize this data
 N,p = data.shape

@@ -39,9 +39,13 @@ class AdaptivePiecewiseConstant(CompressionAlgorithm):
 					else:
 						codes[i,j] = self.data[i,j]
 
-		codes = codes.flatten(order='F') #set as a c-integer type
+		codes = codes.flatten(order='F')
 		fname = self.CODES
 		np.save(fname, codes)
+
+		compressz(self.CODES + '.npy', self.CODES+'.npyz')
+		self.DATA_FILES += [self.CODES + '.npyz']
+
 
 		self.compression_stats['compression_latency'] = timer() - start
 		self.compression_stats['compressed_size'] = self.getSize()
@@ -53,8 +57,7 @@ class AdaptivePiecewiseConstant(CompressionAlgorithm):
 
 		start = timer()
 
-		command = " ".join([self.TURBO_CODE_LOCATION, "-d", self.CODES+".npy.rc", self.CODES+".npy"])
-		os.system(command)
+		decompressz(self.CODES + '.npyz', self.CODES+'.npy')
 		codes = np.load(self.CODES+".npy")
 
 		normalization = np.load(self.NORMALIZATION + '.npy')
@@ -67,7 +70,7 @@ class AdaptivePiecewiseConstant(CompressionAlgorithm):
 		coderange = np.max(codes)
 
 		for i in range(p):
-			codes[:,i] = (codes[:,i]/coderange)*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
+			codes[:,i] = (codes[:,i])*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
 
 
 		self.compression_stats['decompression_latency'] = timer() - start
@@ -85,8 +88,8 @@ Test code here
 """
 ####
 
-#data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:2000,1:]
-data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
+data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:2000,1:]
+#data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
 print(data.shape)
 #data = np.nan_to_num(data)
 
@@ -94,7 +97,7 @@ print(data.shape)
 N,p = data.shape
 
 
-nn = EntropyCoding('quantize')
+nn = AdaptivePiecewiseConstant('quantize')
 nn.load(data)
 nn.compress()
 nn.decompress(data)

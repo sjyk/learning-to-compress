@@ -190,7 +190,6 @@ class CompressionAlgorithm:
 		total = 0
 
 		for file in self.DATA_FILES:
-
 			try:
 				total += os.path.getsize(file)
 			except:
@@ -231,12 +230,14 @@ class CompressionAlgorithm:
 		return {'Linfty': np.max(per_col_errors), 'L1':np.mean(np.abs(data - codec))}
 		
 
-def iarray_bitpacking(codes, order='C'):
+def iarray_bitpacking(codes, order='F'):
 	'''Implements a bit-packed encoding for an nd-integer array
 	   		codes: an nd integer array
 	   		order: 'C' row-major flattening, 'F' column-major flattening
 	'''
 	start = timer()
+
+	codes = codes.astype(np.intc)
 
 	code_range = np.max(codes)#calculate the highest value
 	dims = codes.shape
@@ -253,7 +254,6 @@ def iarray_bitpacking(codes, order='C'):
 
 	#iterates through codes and assigns tthem to the array 
 	for i, c in enumerate(codes):
-		c = int(c)
 		bs = bin(c)[2:].zfill(bit_length)
 		bl = list(map(lambda x: int(x), bs))
 		code_array[i*bit_length:(i+1)*bit_length] = bl
