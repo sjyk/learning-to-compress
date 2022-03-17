@@ -126,18 +126,15 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		for j in range(self.p):
 			vector = self.data[:,j].reshape(-1)
 			en = self.sketch.encode(vector, fn=np.median)
-
-			
+		
 			arrays.append(self.sketch.pack(en))
-			#
+	
 
 		codes = np.concatenate(arrays).astype(np.float32)
 		fname = self.CODES
 		np.save(fname, codes)
-
-		command = " ".join([self.TURBO_CODE_LOCATION, self.TURBO_CODE_PARAMETER, fname+".npy", fname+".npy"])
-		os.system(command)
-		self.DATA_FILES += [fname+".npy.rc"]
+		compressz(self.CODES + '.npy', self.CODES+'.npyz')
+		self.DATA_FILES += [self.CODES + '.npyz']
 
 		self.compression_stats['compression_latency'] = timer() - start
 		self.compression_stats['compressed_size'] = self.getSize()
@@ -156,11 +153,10 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		N = int(normalization[0,p])
 		codes = np.zeros((N,p))
 
-		fname = self.CODES
-		command = " ".join([self.TURBO_CODE_LOCATION, "-d", fname+".npy.rc", fname+".npy"])
-		os.system(command)
-		packed = np.load(fname+".npy", allow_pickle=False)
+		decompressz(self.CODES + '.npyz', self.CODES+'.npy')
+		packed = np.load(self.CODES+".npy", allow_pickle=False)
 		packed = packed.reshape(-1, p)
+		
 
 		print(timer() - start)
 
