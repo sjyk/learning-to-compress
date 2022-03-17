@@ -304,6 +304,7 @@ def delta_xform(data):
 	xform = np.zeros(data.shape)
 	N,p = xform.shape
 
+	#vectorize
 	for i in range(1,N):
 		for j in range(p):
 			xform[i,j] = data[i,j] - data[i-1,j]

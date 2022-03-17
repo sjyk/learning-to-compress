@@ -6,6 +6,8 @@ from delta import *
 from xor import *
 from spartan import *
 from apca import *
+from linear import *
+
 import numpy as np
 
 def initialize(ERROR_THRESH = 0.005):
@@ -14,20 +16,21 @@ def initialize(ERROR_THRESH = 0.005):
 	BASELINES.append(IdentityGZ('gz', error_thresh=ERROR_THRESH))
 	BASELINES.append(Quantize('q', error_thresh=ERROR_THRESH))
 	BASELINES.append(QuantizeGZ('q+gz', error_thresh=ERROR_THRESH))
-	BASELINES.append(ItCompress('itcmp', error_thresh=ERROR_THRESH))
-	BASELINES.append(Spartan('sptn', error_thresh=ERROR_THRESH))
+	#BASELINES.append(ItCompress('itcmp', error_thresh=ERROR_THRESH))
+	#BASELINES.append(Spartan('sptn', error_thresh=ERROR_THRESH))
 	BASELINES.append(EntropyCoding('q+ent', error_thresh=ERROR_THRESH))
-	BASELINES.append(Sprintz('spz', error_thresh=ERROR_THRESH))
-	BASELINES.append(SprintzGzip('spz+gz', error_thresh=ERROR_THRESH))
-	BASELINES.append(Gorilla('grla', error_thresh=ERROR_THRESH))
-	BASELINES.append(GorillaLossy('grla+l', error_thresh=ERROR_THRESH))
+	#BASELINES.append(Sprintz('spz', error_thresh=ERROR_THRESH))
+	#BASELINES.append(SprintzGzip('spz+gz', error_thresh=ERROR_THRESH))
+	#BASELINES.append(Gorilla('grla', error_thresh=ERROR_THRESH))
+	#BASELINES.append(GorillaLossy('grla+l', error_thresh=ERROR_THRESH))
 	BASELINES.append(AdaptivePiecewiseConstant('apca', error_thresh=ERROR_THRESH))
+	BASELINES.append(MultivariateHierarchical('hier', error_thresh=ERROR_THRESH, blocksize=4096))
 	return BASELINES
 
 def run(BASELINES,\
-		DATA_DIRECTORY = '/Users/sanjaykrishnan/Downloads/test_comp/', \
-		FILENAME = 'ColorHistogram.asc',\
-		N=1000):
+		DATA_DIRECTORY = '/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/', \
+		FILENAME = 'HT_Sensor_dataset.dat',\
+		N=4096):
 	data = np.loadtxt(DATA_DIRECTORY + FILENAME)[:N,1:]
 
 	bresults = {}
@@ -51,8 +54,8 @@ plt.rcParams["figure.figsize"] = (10,4)
 
 
 BASELINES = initialize()
-FILENAME = 'ColorHistogram.asc'
-SIZE_LIMIT = 1000
+FILENAME = 'HT_Sensor_dataset.dat'
+SIZE_LIMIT = 4096
 bresults = run(BASELINES, N=SIZE_LIMIT)
 
 
@@ -77,7 +80,7 @@ x2 = [i + 0.1 for i,_ in enumerate(bresults)]
 x = [i for i,_ in enumerate(bresults)]
 labels = [k for _,k in enumerate(bresults)]
 
-plt.bar(x1, [bresults[k]['original_size']/(bresults[k]['compression_latency'] - bresults[k].get('bitpacktime',0))  for k in bresults], width=0.2)
+plt.bar(x1, [bresults[k]['original_size']/(bresults[k]['compression_latency'])  for k in bresults], width=0.2)
 plt.bar(x2, [bresults[k]['compressed_size']/(bresults[k]['decompression_latency'])  for k in bresults], width=0.2)
 
 plt.xticks(x,labels)

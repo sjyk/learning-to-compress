@@ -34,7 +34,7 @@ class Sprintz(CompressionAlgorithm):
 
 		codes, decode = delta_xform(codes)
 
-		fname = self.target + '/delta'
+		fname = self.target + '/learned'
 		np.save(fname, decode)
 
 		self.DATA_FILES += [fname + '.npy']
@@ -47,7 +47,8 @@ class Sprintz(CompressionAlgorithm):
 		self.compression_stats['compression_latency'] = timer() - start
 		self.compression_stats['compressed_size'] = self.getSize()
 		self.compression_stats['compressed_ratio'] = self.getSize()/self.compression_stats['original_size']
-
+		self.compression_stats['code_size'] = self.getSize() - self.getModelSize()
+		self.compression_stats['model_size'] = self.getModelSize()
 		
 
 	def decompress(self, original=None):
@@ -64,7 +65,7 @@ class Sprintz(CompressionAlgorithm):
 		N = int(normalization[0,p])
 		bit_length = struct.bit_length
 
-		fname = self.target + '/delta.npy'
+		fname = self.target + '/learned.npy'
 		decode = np.load(fname)
 		codes = i_delta_xform(codes, decode)
 		coderange = np.max(codes)
@@ -109,7 +110,7 @@ class SprintzGzip(CompressionAlgorithm):
 
 		codes, decode = delta_xform(codes)
 
-		fname = self.target + '/delta'
+		fname = self.target + '/learned'
 		np.save(fname, decode)
 
 		struct = iarray_bitpacking(codes)
@@ -119,7 +120,8 @@ class SprintzGzip(CompressionAlgorithm):
 		self.compression_stats['compression_latency'] = timer() - start
 		self.compression_stats['compressed_size'] = self.getSize()
 		self.compression_stats['compressed_ratio'] = self.getSize()/self.compression_stats['original_size']
-
+		self.compression_stats['code_size'] = self.getSize() - self.getModelSize()
+		self.compression_stats['model_size'] = self.getModelSize()
 		
 
 	def decompress(self, original=None):
@@ -137,7 +139,7 @@ class SprintzGzip(CompressionAlgorithm):
 		N = int(normalization[0,p])
 		bit_length = struct.bit_length
 
-		fname = self.target + '/delta'
+		fname = self.target + '/learned'
 
 		decode = np.load(fname+'.npy')
 		codes = i_delta_xform(codes, decode)

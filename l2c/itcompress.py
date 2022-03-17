@@ -68,19 +68,19 @@ class ItCompress(CompressionAlgorithm):
 	#zero out as many bits as possible
 	def _strip_code(self, vector):
 		p = vector.shape[0]
-		
+
 		for i in range(p): #go component by component
 			value = vector[i]
-			ba = bytearray(struct.pack("d", value))
+			ba = bytearray(struct.pack("f", value))
 
 			for j in range(len(ba)):
 				tmp = ba[j]
 				ba[j] = int('00000000')
-				newvalue = struct.unpack("d", ba)[0]
+				newvalue = struct.unpack("f", ba)[0]
 
 				if np.abs(newvalue - value) > self.error_thresh:
 					ba[j] = tmp
-					vector[i] = struct.unpack("d", ba)[0]
+					vector[i] = struct.unpack("f", ba)[0]
 					break
 
 		return vector

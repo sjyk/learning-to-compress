@@ -44,7 +44,7 @@ class Spartan(CompressionAlgorithm):
 
 		models = []
 
-		reg = RandomForestRegressor(n_estimators=1, max_depth=10)
+		reg = RandomForestRegressor(n_estimators=2, max_depth=5)
 		reg.fit(src[:, model_slice], src[:,prediction_slice])
 		preds = reg.predict(src[:, model_slice])
 
@@ -68,6 +68,7 @@ class Spartan(CompressionAlgorithm):
 		self.compression_stats['compressed_size'] = self.getSize()
 		self.compression_stats['compressed_ratio'] = self.getSize()/self.compression_stats['original_size']
 		self.compression_stats['code_size'] = self.getSize() - self.getModelSize()
+		self.compression_stats['model_size'] = self.getModelSize()
 		
 
 	def decompress(self, original=None):
@@ -116,6 +117,7 @@ Test code here
 """
 ####
 
+"""
 data = np.loadtxt('/Users/sanjaykrishnan/Downloads/test_comp/ColorHistogram.asc')[:,1:]
 
 #normalize this data
@@ -127,5 +129,6 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
+"""
 
 

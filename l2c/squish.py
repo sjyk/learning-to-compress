@@ -22,7 +22,7 @@ class EntropyCoding(CompressionAlgorithm):
 		self.coderange = int(math.ceil(1.0/error_thresh))
 
 		self.TURBO_CODE_LOCATION = "./Turbo-Range-Coder/turborc" 
-		self.TURBO_CODE_PARAMETER = "-25" #on my laptop run -e0 and find best solution
+		self.TURBO_CODE_PARAMETER = "-20" #on my laptop run -e0 and find best solution
 
 
 	"""The main compression loop

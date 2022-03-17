@@ -69,6 +69,8 @@ class AdaptivePiecewiseConstant(CompressionAlgorithm):
 		codes = codes.reshape(N,p, order='F').astype(np.float64)
 		coderange = np.max(codes)
 
+		print('apca',timer() - start)
+
 		for i in range(p):
 			codes[:,i] = (codes[:,i])*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
 
@@ -81,11 +83,12 @@ class AdaptivePiecewiseConstant(CompressionAlgorithm):
 		return codes
 
 
-
+"""
 ####
 """
-Test code here
 """
+Test code here
+
 ####
 
 data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:2000,1:]
@@ -102,5 +105,6 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
+"""
 
 
