@@ -127,9 +127,11 @@ class MultivariateHierarchical(CompressionAlgorithm):
 	
 		codes = np.concatenate(arrays).astype(np.float32)#can be optimized
 		fname = self.CODES
-		np.save(fname, codes)
-		compressz(self.CODES + '.npy', self.CODES+'.npyz')
-		self.DATA_FILES += [self.CODES + '.npyz']
+		
+		#np.save(fname, codes)
+		np.savez_compressed(fname, a=codes)
+		#compressz(self.CODES + '.npy', self.CODES+'.npyz')
+		self.DATA_FILES += [self.CODES + '.npz']
 
 		self.compression_stats['compression_latency'] = timer() - start
 		self.compression_stats['compressed_size'] = self.getSize()
@@ -148,8 +150,8 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		N = int(normalization[0,p])
 		codes = np.zeros((N,p))
 
-		decompressz(self.CODES + '.npyz', self.CODES+'.npy')
-		packed = np.load(self.CODES+".npy", allow_pickle=False)
+		#decompressz(self.CODES + '.npyz', self.CODES+'.npy')
+		packed = np.load(self.CODES+".npz", allow_pickle=False)['a']
 		packed = packed.reshape(-1, p)
 		
 
