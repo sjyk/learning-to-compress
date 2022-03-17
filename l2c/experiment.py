@@ -39,6 +39,7 @@ def run(BASELINES,\
 		nn.compress()
 		nn.decompress(data)
 		bresults[nn.target] = nn.compression_stats
+		print(nn.target, nn.compression_stats['decompression_latency'])
 
 	return bresults
 

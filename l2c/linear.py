@@ -111,11 +111,7 @@ class MultivariateHierarchical(CompressionAlgorithm):
 	def __init__(self, target, error_thresh=0.005, blocksize=1024):
 
 		super().__init__(target, error_thresh)
-
-		self.TURBO_CODE_LOCATION = "./Turbo-Range-Coder/turborc" 
-		self.TURBO_CODE_PARAMETER = "-12" #on my laptop run -e0 and find best solution
 		self.blocksize = blocksize
-
 		self.sketch = HierarchicalSketch(self.error_thresh, blocksize)
 
 
@@ -129,8 +125,7 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		
 			arrays.append(self.sketch.pack(en))
 	
-
-		codes = np.concatenate(arrays).astype(np.float32)
+		codes = np.concatenate(arrays).astype(np.float32)#can be optimized
 		fname = self.CODES
 		np.save(fname, codes)
 		compressz(self.CODES + '.npy', self.CODES+'.npyz')
@@ -142,7 +137,7 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		#self.compression_stats.update(struct.additional_stats)
 
 
-	def decompress(self, original=None):
+	def decompress(self, original=None, error_thresh=0.0):
 
 		start = timer()
 
@@ -161,8 +156,8 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		print(timer() - start)
 
 		for j in range(self.p):
-			sk = self.sketch.unpack(packed[:,j].reshape(-1))
-			codes[:,j] = self.sketch.decode(sk) 
+			sk = self.sketch.unpack(packed[:,j].reshape(-1), error_thresh)
+			codes[:,j] = self.sketch.decode(sk, error_thresh) 
 
 		for i in range(p):
 			codes[:,i] = (codes[:,i])*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
