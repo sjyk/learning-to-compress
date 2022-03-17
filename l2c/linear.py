@@ -68,9 +68,9 @@ class HierarchicalSketch():
 		W = np.zeros(self.blocksize)
 		for h,r in sketch:
 			dims = h.shape[0]
-			index = int(np.log2(dims))
-			Hp = self.decode_matrices[index]
-			W += np.dot(Hp, h)
+			#index = int(np.log2(dims))
+			#Hp = self.decode_matrices[index]
+			W += np.tile(h, self.blocksize // dims)
 
 			if r < error_thresh:
 				break
@@ -87,8 +87,8 @@ class HierarchicalSketch():
 		return np.concatenate(vectors)
 
 	#unpack all of the data
-	def unpack(self, arr, error_thresh=0):
-		array = arr.copy()
+	def unpack(self, array, error_thresh=0):
+		#array = arr.copy()
 		sketch = []
 		for i in range(self.d+1):
 			r = array[0]
@@ -156,8 +156,12 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		print(timer() - start)
 
 		for j in range(self.p):
+			#print('a',j,timer() - start)
 			sk = self.sketch.unpack(packed[:,j].reshape(-1), error_thresh)
+			#print('b',j,timer() - start)
 			codes[:,j] = self.sketch.decode(sk, error_thresh) 
+			#print('c',j, timer() - start)
+
 
 		for i in range(p):
 			codes[:,i] = (codes[:,i])*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
