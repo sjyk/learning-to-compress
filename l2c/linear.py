@@ -53,12 +53,13 @@ class HierarchicalSketch():
 
 		for i in range(0, self.d + 1):
 			v, r = self._mapwindow(curr, 2**i, fn) #map the window
-			Hp = self.decode_matrices[i]
-			curr -= np.dot(Hp, v) #fix with tile
+			#Hp = self.decode_matrices[i]
+			curr -= np.repeat(v, self.blocksize // 2**i) #np.dot(Hp, v) #fix with tile
 
 			#zero out all buckets where max residual is less than eerror thresh
 			
-			mask = np.dot(Hp, (r < self.error_thresh)).astype(np.bool)
+			mask = np.repeat((r < self.error_thresh), self.blocksize // 2**i).astype(np.bool)
+			#np.dot(Hp, (r < self.error_thresh)).astype(np.bool)
 			curr[mask] = 0
 
 			if i == self.d: #on the last level cut all small changes
@@ -80,11 +81,11 @@ class HierarchicalSketch():
 
 			#print(h,r)
 
-			index = int(np.log2(dims))
-			Hp = self.decode_matrices[index]
-			W += np.dot(Hp, h)
+			#index = int(np.log2(dims))
+			#Hp = self.decode_matrices[index]
+			#W += np.dot(Hp, h)
 
-			#W += np.tile(h, self.blocksize // dims)
+			W += np.repeat(h, self.blocksize // dims)
 
 			if r < error_thresh:
 				break
@@ -217,6 +218,7 @@ nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
 """
+
 
 
 
