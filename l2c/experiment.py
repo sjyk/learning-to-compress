@@ -10,7 +10,7 @@ from linear import *
 
 import numpy as np
 
-def initialize(ERROR_THRESH = 0.005):
+def initialize(ERROR_THRESH = 1e-5):
 	#set up baslines
 	BASELINES = []
 	BASELINES.append(IdentityGZ('gz', error_thresh=ERROR_THRESH))

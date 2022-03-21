@@ -39,6 +39,8 @@ class HierarchicalSketch():
 			slc = data[i*width:(i+1)*width]
 			W[i] = fn(slc)
 			R[i] = np.max(np.abs(slc - W[i]))
+
+		#print(W,R)
 		return W, R
 
 
@@ -52,14 +54,17 @@ class HierarchicalSketch():
 		for i in range(0, self.d + 1):
 			v, r = self._mapwindow(curr, 2**i, fn) #map the window
 			Hp = self.decode_matrices[i]
-			curr -= np.dot(Hp, v)
+			curr -= np.dot(Hp, v) #fix with tile
 
 			#zero out all buckets where max residual is less than eerror thresh
+			
 			mask = np.dot(Hp, (r < self.error_thresh)).astype(np.bool)
 			curr[mask] = 0
 
+
 			hierarchy.append(v)
 			residuals.append(np.max(r))
+
 
 		return list(zip(hierarchy, residuals))
 
@@ -68,14 +73,39 @@ class HierarchicalSketch():
 		W = np.zeros(self.blocksize)
 		for h,r in sketch:
 			dims = h.shape[0]
-			#index = int(np.log2(dims))
-			#Hp = self.decode_matrices[index]
-			W += np.tile(h, self.blocksize // dims)
+
+			#print(h,r)
+
+			index = int(np.log2(dims))
+			Hp = self.decode_matrices[index]
+			W += np.dot(Hp, h)
+
+			#W += np.tile(h, self.blocksize // dims)
 
 			if r < error_thresh:
 				break
 
 		return W
+
+	#zero out as many bits as possible
+	def _strip_code(self, vector):
+		p = vector.shape[0]
+
+		for i in range(p): #go component by component
+			value = vector[i]
+			ba = bytearray(struct.pack("d", value))
+
+			for j in range(len(ba)):
+				tmp = ba[j]
+				ba[j] = int('00000000')
+				newvalue = struct.unpack("d", ba)[0]
+
+				if np.abs(newvalue - value) > self.error_thresh:
+					ba[j] = tmp
+					vector[i] = struct.unpack("d", ba)[0]
+					break
+
+		return vector
 
 
 	#packs all of the data into a single array
@@ -88,7 +118,7 @@ class HierarchicalSketch():
 
 	#unpack all of the data
 	def unpack(self, array, error_thresh=0):
-		#array = arr.copy()
+		array = array.copy()
 		sketch = []
 		for i in range(self.d+1):
 			r = array[0]
@@ -122,10 +152,12 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		for j in range(self.p):
 			vector = self.data[:,j].reshape(-1)
 			en = self.sketch.encode(vector, fn=np.median)
+			#print(en)
 		
 			arrays.append(self.sketch.pack(en))
 	
-		codes = np.concatenate(arrays).astype(np.float32)#can be optimized
+		codes = np.vstack(arrays)
+		#print('sizes', codes.shape)
 		fname = self.CODES
 		
 		#np.save(fname, codes)
@@ -139,7 +171,7 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		#self.compression_stats.update(struct.additional_stats)
 
 
-	def decompress(self, original=None, error_thresh=0.0):
+	def decompress(self, original=None, error_thresh=0):
 
 		start = timer()
 
@@ -152,14 +184,14 @@ class MultivariateHierarchical(CompressionAlgorithm):
 
 		#decompressz(self.CODES + '.npyz', self.CODES+'.npy')
 		packed = np.load(self.CODES+".npz", allow_pickle=False)['a']
-		packed = packed.reshape(-1, p)
+		#packed = packed.reshape(-1, p)
 		
 
 		print(timer() - start)
 
 		for j in range(self.p):
 			#print('a',j,timer() - start)
-			sk = self.sketch.unpack(packed[:,j].reshape(-1), error_thresh)
+			sk = self.sketch.unpack(packed[j,:], error_thresh)
 			#print('b',j,timer() - start)
 			codes[:,j] = self.sketch.decode(sk, error_thresh) 
 			#print('c',j, timer() - start)
@@ -173,6 +205,7 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		self.compression_stats['decompression_latency'] = timer() - start
 
 		if not original is None:
+			#print(original-codes)
 			self.compression_stats['errors'] = self.verify(original, codes)
 
 		return codes
@@ -183,8 +216,7 @@ Test code here
 """
 ####
 
-"""
-data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:1024,:]
+data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:1024,1:3]
 
 #data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
 print(data.shape)
@@ -194,12 +226,12 @@ print(data.shape)
 N,p = data.shape
 
 
-nn = MultivariateHierarchical('quantize')
+nn = MultivariateHierarchical('hier')
 nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
-"""
+
 
 
 
