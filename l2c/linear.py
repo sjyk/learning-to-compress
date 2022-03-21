@@ -61,6 +61,8 @@ class HierarchicalSketch():
 			mask = np.dot(Hp, (r < self.error_thresh)).astype(np.bool)
 			curr[mask] = 0
 
+			if i == self.d: #on the last level cut all small changes
+				v[np.abs(v) <= self.error_thresh] = 0
 
 			hierarchy.append(v)
 			residuals.append(np.max(r))
@@ -216,7 +218,7 @@ Test code here
 """
 ####
 
-data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:1024,1:3]
+data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:1024,1:]
 
 #data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
 print(data.shape)
