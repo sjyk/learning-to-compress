@@ -62,7 +62,9 @@ class HierarchicalSketch():
 			curr[mask] = 0
 
 			if i == self.d: #on the last level cut all small changes
-				v[np.abs(v) <= self.error_thresh] = 0
+				#v[np.abs(v) <= self.error_thresh] = 0
+				v = np.floor(v*1.0/self.error_thresh)*self.error_thresh
+				#optimize more
 
 			hierarchy.append(v)
 			residuals.append(np.max(r))
@@ -88,26 +90,6 @@ class HierarchicalSketch():
 				break
 
 		return W
-
-	#zero out as many bits as possible
-	def _strip_code(self, vector):
-		p = vector.shape[0]
-
-		for i in range(p): #go component by component
-			value = vector[i]
-			ba = bytearray(struct.pack("d", value))
-
-			for j in range(len(ba)):
-				tmp = ba[j]
-				ba[j] = int('00000000')
-				newvalue = struct.unpack("d", ba)[0]
-
-				if np.abs(newvalue - value) > self.error_thresh:
-					ba[j] = tmp
-					vector[i] = struct.unpack("d", ba)[0]
-					break
-
-		return vector
 
 
 	#packs all of the data into a single array
@@ -218,6 +200,7 @@ Test code here
 """
 ####
 
+"""
 data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:1024,1:]
 
 #data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
@@ -233,7 +216,7 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
-
+"""
 
 
 

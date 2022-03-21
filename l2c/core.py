@@ -226,7 +226,7 @@ class CompressionAlgorithm:
 
 			#print(data[:,i], codec[:,i])
 		per_col_errors = np.max(np.abs(data - codec), axis=0)
-		print(per_col_errors, np.max(data, axis=0), np.max(codec, axis=0))
+		#print(per_col_errors, np.max(data, axis=0), np.max(codec, axis=0))
 		return {'Linfty': np.max(per_col_errors), 'L1':np.mean(np.abs(data - codec))}
 		
 
