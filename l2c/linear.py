@@ -64,12 +64,16 @@ class HierarchicalSketch():
 
 			if i == self.d: #on the last level cut all small changes
 				#v[np.abs(v) <= self.error_thresh] = 0
-				v = np.floor(v*1.0/self.error_thresh)*self.error_thresh
+				vp = np.floor(v*1.0/self.error_thresh)*self.error_thresh
+				r = np.abs(v - vp)
+				v = vp
+
 				#optimize more
 
 			hierarchy.append(v)
 			residuals.append(np.max(r))
 
+		#print(residuals)
 
 		return list(zip(hierarchy, residuals))
 
@@ -78,12 +82,6 @@ class HierarchicalSketch():
 		W = np.zeros(self.blocksize)
 		for h,r in sketch:
 			dims = h.shape[0]
-
-			#print(h,r)
-
-			#index = int(np.log2(dims))
-			#Hp = self.decode_matrices[index]
-			#W += np.dot(Hp, h)
 
 			W += np.repeat(h, self.blocksize // dims)
 
@@ -103,7 +101,7 @@ class HierarchicalSketch():
 
 	#unpack all of the data
 	def unpack(self, array, error_thresh=0):
-		array = array.copy()
+		#array = array.copy()
 		sketch = []
 		for i in range(self.d+1):
 			r = array[0]
@@ -134,15 +132,31 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		start = timer()
 
 		arrays = []
+
+		#how much do we miss in compression
+		cumulative_gap = np.inf
+		
 		for j in range(self.p):
 			vector = self.data[:,j].reshape(-1)
 			en = self.sketch.encode(vector, fn=np.median)
 			#print(en)
+
+			#find the min
+			#print(en[-1][1])
+			cumulative_gap = min(self.error_thresh - en[-1][1], cumulative_gap)
 		
 			arrays.append(self.sketch.pack(en))
 	
-		codes = np.vstack(arrays)
-		#print('sizes', codes.shape)
+
+		#bitpack to reduce gap
+		#print('gap', cumulative_gap)
+		if cumulative_gap >= 1e-9:
+			codes = np.vstack(arrays).astype(np.float16)
+		elif cumulative_gap >= 1e-18:
+			codes = np.vstack(arrays).astype(np.float32)
+		else:
+			codes = np.vstack(arrays)
+
 		fname = self.CODES
 		
 		#np.save(fname, codes)
@@ -201,7 +215,7 @@ Test code here
 """
 ####
 
-"""
+
 data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:1024,1:]
 
 #data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
@@ -217,7 +231,8 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
-"""
+
+
 
 
 
