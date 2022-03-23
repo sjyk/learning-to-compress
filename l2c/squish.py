@@ -71,7 +71,7 @@ class EntropyCoding(CompressionAlgorithm):
 		coderange = np.max(codes)
 
 		for i in range(p):
-			codes[:,i] = (codes[:,i]/coderange)*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
+			codes[:,i] = (codes[:,i]/coderange)#*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
 
 
 		self.compression_stats['decompression_latency'] = timer() - start

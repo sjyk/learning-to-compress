@@ -80,7 +80,7 @@ class QuantizeGZ(CompressionAlgorithm):
 	The compression codec is initialized with a per
 	attribute error threshold.
 	'''
-	def __init__(self, target, error_thresh=0.005):
+	def __init__(self, target, error_thresh=1e-5):
 
 		super().__init__(target, error_thresh)
 
@@ -128,7 +128,7 @@ class QuantizeGZ(CompressionAlgorithm):
 		bit_length = struct.bit_length
 
 		for i in range(p):
-			codes[:,i] = (codes[:,i]/coderange)*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
+			codes[:,i] = (codes[:,i]/coderange)#*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
 
 
 		self.compression_stats['decompression_latency'] = timer() - start
@@ -149,10 +149,11 @@ class QuantizeGZ(CompressionAlgorithm):
 """
 Test code here
 """
-"""
+
 ####
 
-data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:,1:]
+"""
+data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:4096,1:]
 #data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
 
 #normalize this data

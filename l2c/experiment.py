@@ -10,7 +10,7 @@ from linear import *
 
 import numpy as np
 
-def initialize(ERROR_THRESH = 1e-5):
+def initialize(ERROR_THRESH = 1e-4):
 	#set up baslines
 	BASELINES = []
 	BASELINES.append(IdentityGZ('gz', error_thresh=ERROR_THRESH))
@@ -31,15 +31,16 @@ def run(BASELINES,\
 		DATA_DIRECTORY = '/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/', \
 		FILENAME = 'HT_Sensor_dataset.dat',\
 		N=4096):
-	data = np.loadtxt(DATA_DIRECTORY + FILENAME)[:N,1:]
+	orig = np.loadtxt(DATA_DIRECTORY + FILENAME)[:N,1:]
 
 	bresults = {}
 	for nn in BASELINES:
+		data = orig.copy()
 		nn.load(data)
 		nn.compress()
 		nn.decompress(data)
 		bresults[nn.target] = nn.compression_stats
-		print(nn.target, nn.compression_stats['decompression_latency'])
+		print(nn.target, nn.error_thresh, nn.compression_stats['errors'])
 
 	return bresults
 

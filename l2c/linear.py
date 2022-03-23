@@ -60,10 +60,14 @@ class HierarchicalSketch():
 			
 			mask = np.repeat((r < self.error_thresh), self.blocksize // 2**i).astype(np.bool)
 			#np.dot(Hp, (r < self.error_thresh)).astype(np.bool)
+
+			#print(i,np.sum(mask))
 			curr[mask] = 0
 
 			if i == self.d: #on the last level cut all small changes
 				#v[np.abs(v) <= self.error_thresh] = 0
+				
+				#pass
 				vp = np.floor(v*1.0/self.error_thresh)*self.error_thresh
 				r = np.abs(v - vp)
 				v = vp
@@ -121,7 +125,7 @@ class MultivariateHierarchical(CompressionAlgorithm):
 	The compression codec is initialized with a per
 	attribute error threshold.
 	'''
-	def __init__(self, target, error_thresh=0.005, blocksize=1024):
+	def __init__(self, target, error_thresh=1e-5, blocksize=4096):
 
 		super().__init__(target, error_thresh)
 		self.blocksize = blocksize
@@ -150,12 +154,13 @@ class MultivariateHierarchical(CompressionAlgorithm):
 
 		#bitpack to reduce gap
 		#print('gap', cumulative_gap)
-		if cumulative_gap >= 1e-9:
-			codes = np.vstack(arrays).astype(np.float16)
-		elif cumulative_gap >= 1e-18:
-			codes = np.vstack(arrays).astype(np.float32)
-		else:
-			codes = np.vstack(arrays)
+
+		#if cumulative_gap >= 1e-9:
+		#	codes = np.vstack(arrays).astype(np.float16)
+		#elif cumulative_gap >= 1e-18:
+		#	codes = np.vstack(arrays).astype(np.float32)
+		#else:
+		codes = np.vstack(arrays)
 
 		fname = self.CODES
 		
@@ -197,7 +202,7 @@ class MultivariateHierarchical(CompressionAlgorithm):
 
 
 		for i in range(p):
-			codes[:,i] = (codes[:,i])*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
+			codes[:,i] = (codes[:,i])#*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
 
 		print(timer() - start)
 
@@ -216,7 +221,8 @@ Test code here
 ####
 
 
-data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:1024,1:]
+"""
+data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:4096,1:]
 
 #data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
 print(data.shape)
@@ -231,6 +237,8 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
+"""
+
 
 
 

@@ -72,7 +72,7 @@ class AdaptivePiecewiseConstant(CompressionAlgorithm):
 		print('apca',timer() - start)
 
 		for i in range(p):
-			codes[:,i] = (codes[:,i])*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
+			codes[:,i] = (codes[:,i])#*(normalization[0,i] - normalization[1,i]) + normalization[1,i]
 
 
 		self.compression_stats['decompression_latency'] = timer() - start

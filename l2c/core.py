@@ -220,9 +220,9 @@ class CompressionAlgorithm:
 
 		per_col_errors = np.zeros((p,1))
 		for i in range(p):
-			data[:,i] = data[:,i]#(data[:,i] - self.normalization[1,i])/(self.normalization[0,i] - self.normalization[1,i])
-			codec[:,i]= codec[:,i]# ( - self.normalization[1,i])/(self.normalization[0,i] - self.normalization[1,i])
-			per_col_errors = np.abs(data[:,i] - codec[:,i])/(self.normalization[0,i] - self.normalization[1,i])
+			data[:,i] = (data[:,i] - self.normalization[1,i])/(self.normalization[0,i] - self.normalization[1,i])
+			codec[:,i]= codec[:,i]
+			per_col_errors = np.abs(data[:,i] - codec[:,i])
 
 			#print(data[:,i], codec[:,i])
 		per_col_errors = np.max(np.abs(data - codec), axis=0)
