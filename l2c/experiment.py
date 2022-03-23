@@ -31,7 +31,11 @@ def run(BASELINES,\
 		DATA_DIRECTORY = '/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/', \
 		FILENAME = 'HT_Sensor_dataset.dat',\
 		N=4096):
-	orig = np.loadtxt(DATA_DIRECTORY + FILENAME)[:N,1:]
+	#orig = np.loadtxt(DATA_DIRECTORY + FILENAME)[:N,1:]
+	orig = np.load('/Users/sanjaykrishnan/Downloads/l2c/data/exchange_rate.npy')[:N,1:]
+
+	#print(orig[:100,0])
+	#exit()
 
 	bresults = {}
 	for nn in BASELINES:
@@ -56,7 +60,8 @@ plt.rcParams["figure.figsize"] = (10,4)
 
 
 BASELINES = initialize()
-FILENAME = 'HT_Sensor_dataset.dat'
+FILENAME = 'exchange_rate'
+#FILENAME = 'ht'
 SIZE_LIMIT = 4096
 bresults = run(BASELINES, N=SIZE_LIMIT)
 

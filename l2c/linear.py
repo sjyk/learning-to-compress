@@ -14,6 +14,7 @@ class HierarchicalSketch():
 		self.blocksize = blocksize #must be a power of 2
 		self.d = int(np.log2(blocksize))
 		self.decode_matrices = {}
+		self.start = 0
 
 		for i in range(0,self.d+1):
 			self.decode_matrices[i] = self.decode_matrix(self.blocksize,2**i)
@@ -50,8 +51,10 @@ class HierarchicalSketch():
 		curr = data.copy()
 		hierarchy = [] 
 		residuals = []
+		w = 0.5*((self.d +1) - self.start)
 
-		for i in range(0, self.d + 1):
+		for i in range(self.start, self.d + 1):
+
 			v, r = self._mapwindow(curr, 2**i, fn) #map the window
 			#Hp = self.decode_matrices[i]
 			curr -= np.repeat(v, self.blocksize // 2**i) #np.dot(Hp, v) #fix with tile
@@ -61,20 +64,30 @@ class HierarchicalSketch():
 			mask = np.repeat((r < self.error_thresh), self.blocksize // 2**i).astype(np.bool)
 			#np.dot(Hp, (r < self.error_thresh)).astype(np.bool)
 
-			#print(i,np.sum(mask))
-			curr[mask] = 0
+			#print(i, self.error_thresh, v[r > self.error_thresh])
 
+			#print(i,np.sum(mask))
+
+			#curr[mask] = 0
+
+			v = np.rint(v*w/self.error_thresh)*(self.error_thresh/w)
+			#print(v)
+
+			"""
 			if i == self.d: #on the last level cut all small changes
 				#v[np.abs(v) <= self.error_thresh] = 0
 				
 				#pass
+				#vp = v
 				vp = np.floor(v*1.0/self.error_thresh)*self.error_thresh
 				r = np.abs(v - vp)
 				v = vp
 
 				#optimize more
 
-			hierarchy.append(v)
+			"""
+
+			hierarchy.append(v.astype(np.float32))
 			residuals.append(np.max(r))
 
 		#print(residuals)
@@ -107,13 +120,13 @@ class HierarchicalSketch():
 	def unpack(self, array, error_thresh=0):
 		#array = array.copy()
 		sketch = []
-		for i in range(self.d+1):
+		for i in range(self.start, self.d+1):
 			r = array[0]
 			h = array[1:2**i+1]
 			sketch.append((h,r))
 			array = array[2**i+1:]
 
-			if r < error_thresh:
+			if (r < error_thresh) or array.shape[0] == 0:
 				break
 
 		return sketch
@@ -125,7 +138,7 @@ class MultivariateHierarchical(CompressionAlgorithm):
 	The compression codec is initialized with a per
 	attribute error threshold.
 	'''
-	def __init__(self, target, error_thresh=1e-5, blocksize=4096):
+	def __init__(self, target, error_thresh=1e-5, blocksize=1024):
 
 		super().__init__(target, error_thresh)
 		self.blocksize = blocksize
@@ -214,6 +227,11 @@ class MultivariateHierarchical(CompressionAlgorithm):
 
 		return codes
 
+
+def bisect(x):
+	N = x.shape[0]
+	return x[N // 2]
+
 ####
 """
 Test code here
@@ -221,10 +239,10 @@ Test code here
 ####
 
 
-"""
-data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:4096,1:]
+#data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:4096,1:]
 
-#data = np.load('/Users/sanjaykrishnan/Downloads/ts_compression/l2c/data/electricity.npy')
+"""
+data = np.load('/Users/sanjaykrishnan/Downloads/l2c/data/exchange_rate.npy')[:1024,1:]
 print(data.shape)
 #data = np.nan_to_num(data)
 
@@ -238,6 +256,8 @@ nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
 """
+
+
 
 
 

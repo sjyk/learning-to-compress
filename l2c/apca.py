@@ -39,7 +39,7 @@ class AdaptivePiecewiseConstant(CompressionAlgorithm):
 					else:
 						codes[i,j] = self.data[i,j]
 
-		codes = codes.flatten(order='F')
+		codes = codes.flatten(order='F').astype(np.float64)
 		fname = self.CODES
 		np.save(fname, codes)
 
