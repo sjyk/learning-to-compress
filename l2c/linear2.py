@@ -3,79 +3,80 @@ import os
 from timeit import default_timer as timer
 import math
 import struct
+from scipy.interpolate import interp1d
 from core import *
 
 
 #implements a univariate sketch
 class HierarchicalSketch():
 
-	def __init__(self, min_error_thresh, blocksize, start=0, dtype=np.float64):
+	def __init__(self, min_error_thresh, blocksize, pfn, sfn):
 		self.error_thresh = min_error_thresh
 		self.blocksize = blocksize #must be a power of 2
 		self.d = int(np.log2(blocksize))
-		self.start = start
-		self.dtype = dtype
+		self.pfn = pfn
+		self.sfn = sfn
 
 
-	#maps a function over a window and calculates the max residual
-	def _mapwindow(self, data, w, fn):
-		width = (self.blocksize // w)
-		W = data.reshape(-1, width)
+	def pool(self, x, fn, width):
+	    slices = x.reshape(-1,width)
+	    N,_ = slices.shape
+	    
+	    return np.array([fn(slices[i]) for i in range(N)])
 
-		return fn(W, axis=1)
+
+	def spline(self, p, width, inter):
+	    N = p.shape[0]
+	    
+	    #degenerate case
+	    if N == 1:
+	        return np.ones(N*width)*p[0]
+	    
+	    #treat every obs as midpoint of its range
+	    fn = interp1d(np.arange(0,N*width, width) + (width-1)/2, p, \
+	                  kind=inter, fill_value="extrapolate")
+	    
+	    return fn(np.arange(0,N*width,1))
 
 
 	#only works on univariate data
-	def encode(self, data, fn=np.mean):
+	def encode(self, data):
 
 		curr = data.copy()
 		hierarchy = [] 
 		residuals = []
-		w = 0.5*((self.d +1) - self.start)
 
-		for i in range(self.start, self.d + 1):
+		for i in range(0, self.d + 1):
+			w = self.blocksize // 2**i
 
-			v  = self._mapwindow(curr, 2**i, fn) #map the window
-			#Hp = self.decode_matrices[i]
-			curr -= np.repeat(v, self.blocksize // 2**i) #np.dot(Hp, v) #fix with tile
+			v = self.pool(curr, self.pfn, w) #map the window
+			vp = self.spline(v, w, self.sfn)
+			r = self.pool(np.abs(curr - vp), np.max, w)
+
+			#print(r)
+
+			curr -= vp #np.repeat(v, self.blocksize // 2**i) #np.dot(Hp, v) #fix with tile
 
 			#zero out all buckets where max residual is less than eerror thresh
 			
-			#mask = np.repeat((r < self.error_thresh), self.blocksize // 2**i).astype(np.bool)
+			mask = np.repeat((r < self.error_thresh), self.blocksize // 2**i).astype(np.bool)
 			#np.dot(Hp, (r < self.error_thresh)).astype(np.bool)
 
-			#print(i, self.error_thresh, v[r > self.error_thresh])
-
 			#print(i,np.sum(mask))
+			curr[mask] = 0
 
-			#curr[mask] = 0
-
-			v = np.rint(v*w/self.error_thresh)*(self.error_thresh/w)
-			#print(v)
-
-			"""
 			if i == self.d: #on the last level cut all small changes
 				#v[np.abs(v) <= self.error_thresh] = 0
 				
 				#pass
-				#vp = v
 				vp = np.floor(v*1.0/self.error_thresh)*self.error_thresh
 				r = np.abs(v - vp)
 				v = vp
 
 				#optimize more
 
-			"""
-
-			"""
-			if self.error_thresh >= 1e-5:
-				v = v.astype(np.float16)
-			elif self.error_thresh >= 1e-8:
-				v = v.astype(np.float32)
-			"""
-
 			hierarchy.append(v)
-			residuals.append(1)
+			residuals.append(np.max(r))
 
 		#print(residuals)
 
@@ -87,7 +88,7 @@ class HierarchicalSketch():
 		for h,r in sketch:
 			dims = h.shape[0]
 
-			W += np.repeat(h, self.blocksize // dims)
+			W += self.spline(h, self.blocksize // dims, self.sfn)
 
 			if r < error_thresh:
 				break
@@ -101,19 +102,19 @@ class HierarchicalSketch():
 		for h,r in sketch:
 			vector = np.concatenate([np.array([r]), h])
 			vectors.append(vector)
-		return np.concatenate(vectors).astype(self.dtype)
+		return np.concatenate(vectors)
 
 	#unpack all of the data
 	def unpack(self, array, error_thresh=0):
 		#array = array.copy()
 		sketch = []
-		for i in range(self.start, self.d+1):
+		for i in range(self.d+1):
 			r = array[0]
 			h = array[1:2**i+1]
 			sketch.append((h,r))
 			array = array[2**i+1:]
 
-			if (r < error_thresh) or array.shape[0] == 0:
+			if r < error_thresh:
 				break
 
 		return sketch
@@ -125,11 +126,11 @@ class MultivariateHierarchical(CompressionAlgorithm):
 	The compression codec is initialized with a per
 	attribute error threshold.
 	'''
-	def __init__(self, target, error_thresh=1e-5, blocksize=1024):
+	def __init__(self, target, error_thresh=1e-5, blocksize=4096):
 
 		super().__init__(target, error_thresh)
 		self.blocksize = blocksize
-		self.sketch = HierarchicalSketch(self.error_thresh, blocksize)
+		self.sketch = HierarchicalSketch(self.error_thresh, blocksize, pfn=bisect, sfn='nearest')
 
 
 	def compress(self):
@@ -142,7 +143,7 @@ class MultivariateHierarchical(CompressionAlgorithm):
 		
 		for j in range(self.p):
 			vector = self.data[:,j].reshape(-1)
-			en = self.sketch.encode(vector, fn=np.median)
+			en = self.sketch.encode(vector)
 			#print(en)
 
 			#find the min
@@ -214,7 +215,6 @@ class MultivariateHierarchical(CompressionAlgorithm):
 
 		return codes
 
-
 def bisect(x):
 	N = x.shape[0]
 	return x[N // 2]
@@ -226,10 +226,9 @@ Test code here
 ####
 
 
-#data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:4096,1:]
+#data = np.loadtxt('/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/HT_Sensor_dataset.dat')[:8192,1:]
 
-"""
-data = np.load('/Users/sanjaykrishnan/Downloads/l2c/data/exchange_rate.npy')[:1024,1:]
+data = np.load('/Users/sanjaykrishnan/Downloads/l2c/data/exchange_rate.npy')[:4096,1:]
 print(data.shape)
 #data = np.nan_to_num(data)
 
@@ -242,8 +241,6 @@ nn.load(data)
 nn.compress()
 nn.decompress(data)
 print(nn.compression_stats)
-"""
-
 
 
 

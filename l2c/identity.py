@@ -83,7 +83,9 @@ class IdentityGZ(CompressionAlgorithm):
 	def compress(self):
 		start = timer()
 
+
 		np.save(self.RAW, self.data)
+
 		compressz(self.RAW + '.npy', self.RAW+'.npyz')
 
 		self.compression_stats['compression_latency'] = timer() - start
@@ -106,7 +108,7 @@ class IdentityGZ(CompressionAlgorithm):
 		N = int(normalization[0,p])
 
 		for i in range(p):
-			codes[:,i] = (codes[:,i] + normalization[1,i])*(normalization[0,i] - normalization[1,i])
+			codes[:,i] = (codes[:,i])# + normalization[1,i])#*(normalization[0,i] - normalization[1,i])
 
 
 		self.compression_stats['decompression_latency'] = timer() - start
@@ -139,12 +141,13 @@ class BitStripGZ(CompressionAlgorithm):
 	def compress(self):
 		start = timer()
 
-		N, _ = self.data.shape
+		if self.error_thresh >= 1e-3:
+			np.save(self.RAW, self.data.astype(np.float16))
+		elif self.error_thresh >= 1e-6:
+			np.save(self.RAW, self.data.astype(np.float32))
+		else:
+			np.save(self.RAW, self.data)
 
-		for i in range(N):
-			self.data[i,:] = self._strip_code(self.data[i,:])
-
-		np.save(self.RAW, self.data)
 		compressz(self.RAW + '.npy', self.RAW+'.npyz')
 
 		self.compression_stats['compression_latency'] = timer() - start
@@ -167,7 +170,7 @@ class BitStripGZ(CompressionAlgorithm):
 		N = int(normalization[0,p])
 
 		for i in range(p):
-			codes[:,i] = (codes[:,i] + normalization[1,i])*(normalization[0,i] - normalization[1,i])
+			codes[:,i] = (codes[:,i])# + normalization[1,i])#*(normalization[0,i] - normalization[1,i])
 
 
 		self.compression_stats['decompression_latency'] = timer() - start

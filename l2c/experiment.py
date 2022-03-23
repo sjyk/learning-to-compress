@@ -14,6 +14,7 @@ def initialize(ERROR_THRESH = 1e-4):
 	#set up baslines
 	BASELINES = []
 	BASELINES.append(IdentityGZ('gz', error_thresh=ERROR_THRESH))
+	BASELINES.append(BitStripGZ('bgz', error_thresh=ERROR_THRESH))
 	BASELINES.append(Quantize('q', error_thresh=ERROR_THRESH))
 	BASELINES.append(QuantizeGZ('q+gz', error_thresh=ERROR_THRESH))
 	#BASELINES.append(ItCompress('itcmp', error_thresh=ERROR_THRESH))
@@ -31,8 +32,8 @@ def run(BASELINES,\
 		DATA_DIRECTORY = '/Users/sanjaykrishnan/Downloads/HT_Sensor_UCIsubmission/', \
 		FILENAME = 'HT_Sensor_dataset.dat',\
 		N=4096):
-	#orig = np.loadtxt(DATA_DIRECTORY + FILENAME)[:N,1:]
-	orig = np.load('/Users/sanjaykrishnan/Downloads/l2c/data/exchange_rate.npy')[:N,1:]
+	orig = np.loadtxt(DATA_DIRECTORY + FILENAME)[:N,1:]
+	#orig = np.load('/Users/sanjaykrishnan/Downloads/l2c/data/exchange_rate.npy')[:N,1:]
 
 	#print(orig[:100,0])
 	#exit()
@@ -60,8 +61,8 @@ plt.rcParams["figure.figsize"] = (10,4)
 
 
 BASELINES = initialize()
-FILENAME = 'exchange_rate'
-#FILENAME = 'ht'
+#FILENAME = 'exchange_rate'
+FILENAME = 'ht'
 SIZE_LIMIT = 4096
 bresults = run(BASELINES, N=SIZE_LIMIT)
 
